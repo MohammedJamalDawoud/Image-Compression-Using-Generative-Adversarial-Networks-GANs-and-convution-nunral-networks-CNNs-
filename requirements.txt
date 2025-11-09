@@ -6,3 +6,4 @@ matplotlib
 Pillow
 opencv-python
 tqdm
+scikit-image

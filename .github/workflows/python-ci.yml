@@ -1,0 +1,46 @@
+name: Python CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create synthetic image and run inference
+        run: |
+          python - << 'PY'
+          from PIL import Image, ImageDraw
+          import os
+          os.makedirs('samples', exist_ok=True)
+          img = Image.new('RGB', (256,256), 'white')
+          d = ImageDraw.Draw(img)
+          d.rectangle([32,32,224,224], outline='black', width=5)
+          d.text((80,120), 'CI TEST', fill='blue')
+          img.save('samples/ci_sample.png')
+          PY
+          python main.py --input samples/ci_sample.png --channels 8 --models-dir models --output-dir outputs --cpu
+
+      - name: Upload outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: outputs
+          path: outputs/**
+
+
